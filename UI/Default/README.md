@@ -26,20 +26,21 @@ Feature modules must not depend on rollouts, controls, dialog state, or INI UI p
 - `DialogHost.ms` — floating-dialog position and vertical-size persistence.
 - `ScriptReload.ms` — generic reload helper that prefers a newer matching versioned script.
 - `ToolTitleButton.ms` — canonical reusable `tool title button` styling plus the global `restartTool` helper.
-- `Default-UI-Template.ms` — frontend-only rollout template showing how the pieces connect.
+- Canonical dialog template: `G:\CODE\MAXSCRIPT\SCRIPTS\CODEBASE\UI\Templates\Dialog-default.ms` — frontend-only rollout template showing how the pieces connect.
 
 ## Mandatory first-version baseline
 
 Use this framework from the **first runnable UI version** of every new MaxScript tool UI. It is not a final cleanup or polish pass.
 
-Start new UI work from `Default-UI-Template.ms`. From the first version, a standalone tool dialog or owning rollout includes:
+Start new UI work from `G:\CODE\MAXSCRIPT\SCRIPTS\CODEBASE\UI\Templates\Dialog-default.ms`. From the first version, a standalone tool dialog or owning rollout includes:
 
-- the canonical `.NET tool title button` at the top of the UI, with font size derived from its current height as `button.height - 4`;
+- the canonical `.NET tool title button` at the top of the UI, using a fixed 14 px font and `button.height = font_size + 6` (20 px by default);
 - LMB restart through `restartTool`;
 - INI persistence for relevant control values, modes, and options;
 - one stable, unversioned INI stored beside the owning/main `.ms` script by default;
 - remembered dialog position and supported size state through `DialogHost.ms`;
 - the shared 12 px sizing/layout defaults from `maxscript-ui-rules.md`.
+- compact native spinners with their labels on the same row; use `fieldWidth:48` by default, which is intended for values around the `9.999` format, and widen only when the real numeric format requires it.
 
 Embedded child/subrollouts inside one owning dialog do not repeat the tool title button. They still follow the shared layout/state rules and persist their own relevant state. A rollout that is launched as its own dialog receives the full baseline.
 

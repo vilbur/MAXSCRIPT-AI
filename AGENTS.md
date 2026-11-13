@@ -9,10 +9,10 @@ These rules are mandatory for every MaxScript project change and do not need to 
 
 The shared MaxScript Codebase layers below are canonical source-of-truth libraries and are **READ-ONLY by default in every chat**:
 
-- `Codebase/Functions/`
-- `Codebase/Operations/`
-- `Codebase/Tools/`
-- `Codebase/Toolsets/`
+- `Functions/`
+- `Operations/`
+- `Tools/`
+- `Toolsets/`
 
 This protection is recursive and includes source files, `AGENTS.md`, `design.md`, tests, documentation, support files, version folders, and any other content stored under those protected layer roots.
 
@@ -53,7 +53,7 @@ Do not broaden permission from one Function to another Function, from one Operat
 
 ### Protected write check
 
-Before every write under `Codebase/Functions/`, `Codebase/Operations/`, `Codebase/Tools/`, or `Codebase/Toolsets/`, internally verify all of the following:
+Before every write under `Functions/`, `Operations/`, `Tools/`, or `Toolsets/`, internally verify all of the following:
 
 ```text
 PROTECTED CODEBASE WRITE CHECK
@@ -73,17 +73,17 @@ The current lock covers Functions, Operations, Tools, and Toolsets.
 ## CRITICAL SHARED CORE FUNCTIONS REUSE
 
 
-`Codebase/Functions/` is the canonical reusable core library for **all MaxScript development**. Treat its verified public Functions as source of truth, not as examples to rewrite locally.
+`Functions/` is the canonical reusable core library for **all MaxScript development**. Treat its verified public Functions as source of truth, not as examples to rewrite locally.
 
 ### Mandatory reuse preflight
 
 Before writing a new atomic helper, MAXScript/native wrapper, geometry primitive, selection helper, modifier helper, path/helper utility, validation helper, or other low-level reusable behavior:
 
-1. Inspect the relevant area of `Codebase/Functions/` first.
+1. Inspect the relevant area of `Functions/` first.
 2. Check the Function contract and supported context before designing a replacement.
 3. If an existing Function provides the required behavior, use that Function.
 4. Do not reimplement, copy/paste, rename, lightly rewrite, or create a project-local variant of the same core behavior.
-5. Do not create an extra project helper script whose only purpose is to duplicate behavior already owned by `Codebase/Functions/`.
+5. Do not create an extra project helper script whose only purpose is to duplicate behavior already owned by `Functions/`.
 
 This preflight is mandatory even when the user does not mention `Functions` in the task. A new chat must not reinvent shared core behavior merely because it has not seen the implementation before.
 
@@ -103,15 +103,15 @@ When a small adapter is genuinely required because caller data has a different s
 
 Using shared core functionality must not require inventing a new per-project copy of that functionality. Load/call the canonical shared Function dependency through the project's normal dependency-loading mechanism. Do not add `Helpers.ms`, `Utils.ms`, `Common.ms`, or similarly named local files merely to reproduce an existing shared Function.
 
-Project-specific behavior that is not generally reusable may remain project-local. Once an atomic behavior is genuinely reusable across MaxScript developments, its canonical home is `Codebase/Functions/`.
+Project-specific behavior that is not generally reusable may remain project-local. Once an atomic behavior is genuinely reusable across MaxScript developments, its canonical home is `Functions/`.
 
 ### Missing core behavior
 
-If a required generally reusable atomic behavior does not yet exist in `Codebase/Functions/`:
+If a required generally reusable atomic behavior does not yet exist in `Functions/`:
 
 - do not silently create a competing permanent implementation in an Operation, Tool, or Toolset;
 - identify the missing Function contract;
-- because `Codebase/Functions/` is protected read-only by default, modify or add the shared Function only when the current user prompt explicitly authorizes that shared Functions change;
+- because `Functions/` is protected read-only by default, modify or add the shared Function only when the current user prompt explicitly authorizes that shared Functions change;
 - until authorized, keep the canonical Functions library unchanged rather than pretending a downstream duplicate is the new source of truth.
 
 ### Stable source-of-truth rule
@@ -227,13 +227,15 @@ if moved_position != expected_position then
 ## CRITICAL RETURN TYPE SAFETY
 
 
-- Every function must preserve its return-type contract on every code path.
-- If a function is designed to return an array, return an array on success and return an empty array `#()` or `undefined` when there is no valid result, according to the function contract.
-- Never return unrelated status strings such as `"ok"`, `"failed"`, `"error"`, or arbitrary text from a function whose callers expect an array.
-- Likewise, do not return `true`, `false`, integers, or other unrelated types from an array-returning function unless the function contract explicitly defines such a union type.
-- Do not overload return values to carry status messages. Report status separately through logging, Listener output, a result struct, or another explicit channel.
-- Apply the same rule to other return types: a function expected to return a node, BitArray, boolean, number, string, struct, or other type must not silently return an unrelated type.
-- Before delivery, inspect all early returns, failure paths, `catch` paths, and fall-through expressions to ensure they return the documented type or `undefined` where explicitly allowed.
+- Every function must preserve its declared/documented return-type contract on every code path.
+- This rule applies equally to **all** return datatypes, including Array, BitArray, Integer, Float, Boolean, String, Point3, Matrix3, node, modifier instance, struct, and any other documented result type.
+- A function must never return an unrelated datatype merely as a status signal. In particular, do not return arbitrary strings such as `"ok"`, `"failed"`, `"error"`, `"success"`, or similar text when the function contract expects an Integer, Float, Boolean, Array, BitArray, node, struct, or another non-String datatype.
+- Likewise, do not return an Integer, Boolean, Array, String, or any other unrelated value when the contract expects another datatype, unless the function contract explicitly defines that union of possible result types.
+- If a function is designed to return an Array, return an Array on success and return `#()` or `undefined` when there is no valid result, according to the documented contract.
+- If a function is designed to return an Integer, return an Integer on every normal result path; use a documented Integer sentinel such as `0` or `-1`, or `undefined` only when the contract explicitly allows it. Never substitute `"ok"` or `"failed"`.
+- Apply the same principle to every other datatype: use a valid value of the expected datatype, or `undefined` only when `undefined` is part of the documented contract.
+- Do not overload return values to carry human-readable status messages. Report status separately through logging, Listener output, a result struct, an output parameter, or another explicit channel.
+- Before delivery, inspect all early returns, failure paths, `catch` paths, and fall-through expressions to ensure every returned value matches the documented datatype contract.
 
 
 Bad:
@@ -256,6 +258,30 @@ function collectNodes source_node =
 (
     if source_node == undefined then return #()
     #()
+)
+```
+
+
+Bad Integer contract:
+
+
+```maxscript
+function countValidNodes nodes =
+(
+    if nodes == undefined then return "failed"
+    0
+)
+```
+
+
+Good Integer contract:
+
+
+```maxscript
+function countValidNodes nodes =
+(
+    if nodes == undefined then return 0
+    0
 )
 ```
 
@@ -599,13 +625,13 @@ This keeps topology IDs stable during operations while ensuring later index-sens
 - Follow `maxscript-unit-precision.md` for exact unit handling, numeric precision, rounding, and explicit-tolerance rules.
 - Follow `maxscript-modifier-rules.md` whenever a task adds, removes, inserts, reorders, searches for, reuses, owns, or deletes modifiers.
 - Follow `maxscript-dump-debug.md` for DEV-mode DUMP logging to both the 3ds Max Listener and a repository-local dump file.
-\\\\- For `Editable_Poly` or `Edit_Poly` development, inspect the relevant shared material under `Codebase/Operations/Epoly/` and `Codebase/Tools/EPOLY/` before reimplementing existing working methods or snippets.
+\\\\- For `Editable_Poly` or `Edit_Poly` development, inspect the relevant shared material under `Operations/Epoly/` and `Tools/EPOLY/` before reimplementing existing working methods or snippets.
 
 
 ## Codebase
 
 
-The canonical reusable MaxScript hierarchy lives under `Codebase/`.
+The canonical reusable MaxScript hierarchy lives in the separate MaxScript codebase root configured by the AI AGENTS project. Paths in this section are relative to that root.
 
 
 `Functions -> Operations -> Tools -> Toolsets`
@@ -614,10 +640,10 @@ The canonical reusable MaxScript hierarchy lives under `Codebase/`.
 Canonical layer instruction files:
 
 
-- `Codebase/Functions/AGENTS.md`
-- `Codebase/Operations/AGENTS.md`
-- `Codebase/Tools/AGENTS.md`
-- `Codebase/Toolsets/AGENTS.md`
+- `Functions/AGENTS.md`
+- `Operations/AGENTS.md`
+- `Tools/AGENTS.md`
+- `Toolsets/AGENTS.md`
 
 
 Category folders inside a layer are organizational only. They do not create a new architecture layer or change dependency direction.
@@ -626,25 +652,36 @@ Category folders inside a layer are organizational only. They do not create a ne
 Current Tools organization:
 
 
-- `Codebase/Tools/LAYERS/`
-- `Codebase/Tools/SELECTION/`
-- `Codebase/Tools/GEOMETRY/`
-- `Codebase/Tools/EPOLY/`
-- `Codebase/Tools/SCENE/`
-- `Codebase/Tools/MATERIALS/`
-- `Codebase/Tools/DUMP/` for shared diagnostic/debug tooling.
+- `Tools/LAYERS/`
+- `Tools/SELECTION/`
+- `Tools/GEOMETRY/`
+- `Tools/EPOLY/`
+- `Tools/SCENE/`
+- `Tools/MATERIALS/`
+- `Tools/DUMP/` for shared diagnostic/debug tooling.
 
 
-`Codebase/Tools/EPOLY/` may further group tools by component domain such as `Edge Tools/`, `Face Tools/`, `Loop Tools/`, and `Vertex Tools/`.
+`Tools/EPOLY/` may further group tools by component domain such as `Edge Tools/`, `Face Tools/`, `Loop Tools/`, and `Vertex Tools/`.
 
 
-For `Editable_Poly` or `Edit_Poly` work, inspect `Codebase/Operations/Epoly/` for reusable operation-level material and `Codebase/Tools/EPOLY/` for existing user-facing Epoly tools before reimplementing a working method.
+For `Editable_Poly` or `Edit_Poly` work, inspect `Operations/Epoly/` for reusable operation-level material and `Tools/EPOLY/` for existing user-facing Epoly tools before reimplementing a working method.
 
 
 Do not add new reusable assets back to the old `Modules/` or root `Epoly/` locations. Place them in the appropriate Codebase layer/category.
 
 
 When working in one of these layers, follow that layer's `AGENTS.md` in addition to this parent file and the other relevant shared rules.
+
+
+## README AND DESIGN FILE PAIRING
+
+- Whenever a new MaxScript project, package, shared Function/Operation/Tool/Toolset, or other maintained repository folder receives a design file, create `README.md` in the same folder at the same time by default.
+- Treat `README.md` and the design file as a standard documentation pair. Do not create a new design file without its accompanying `README.md` unless the current project explicitly opts out.
+- `README.md` is the concise entry document: purpose, how to run/use the item, important files, dependencies, and basic usage.
+- The design file is the implementation/behavior contract: architecture, responsibilities, workflows, constraints, design decisions, and maintained feature contracts.
+- Do not duplicate the same long content in both files. Keep README user/developer oriented and keep design decisions in the design file.
+- Preserve the established design filename casing of an existing project. The current shared MaxScript Codebase convention is `design.md`; if another repository explicitly uses `DESIGN.md`, keep that casing. In either case, pair it with exactly `README.md`.
+- This rule applies when scaffolding new maintained folders. Do not mass-create missing README files across existing repositories unless the user explicitly requests that cleanup.
 
 
 \\\\\\\#\\\\\\\# UI tooltips
@@ -664,7 +701,7 @@ tooltip:"LMB: Run the primary action.\\\\\\\\n\\\\\\\\nCTRL \\\\+ RMB: Open addi
 
 
 \\\\- For any task that creates a new MaxScript dialog/rollout or begins a new tool UI, read \\\\\\`maxscript-ui-rules.md\\\\\\` and \\\\\\`UI/Default/README.md\\\\\\` **before writing the first UI code**.      
-\\\\- Start the first runnable UI version from the canonical \\\\\\`UI/Default/Default-UI-Template.ms\\\\\\` baseline. Do not build a stripped-down UI first and retrofit the shared defaults later.      
+\\\\- Start the first runnable UI version from the canonical \\\\\\`G:\CODE\MAXSCRIPT\SCRIPTS\CODEBASE\UI\Templates\Dialog-default.ms\\\\\\` baseline. Do not build a stripped-down UI first and retrofit the shared defaults later.      
 \\\\- From the first UI version, every standalone tool dialog or owning rollout must include the canonical \\\\\\`tool title button\\\\\\`, restart behavior, INI-backed UI state persistence, dialog position/size persistence, and the shared sizing/layout defaults unless the project explicitly overrides a default.      
 \\\\- By default, that UI INI must be a stable unversioned file stored in the same directory as the owning/main `.ms` script. Versioned entry scripts share it; do not default to `#userScripts`, AppData, temp, or another global folder unless explicitly overridden.      
 \\\\- Embedded child/subrollouts inside one owning tool UI do not duplicate the tool title button; they still follow the shared layout/state rules and persist their own relevant control state. If a rollout can run as its own dialog, it receives the full baseline.      

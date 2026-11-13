@@ -34,7 +34,7 @@ These defaults are required from the **first runnable UI version** of every new 
 
 
 
-\- Before writing the first dialog/rollout code, read this file plus `UI/Default/README.md`, and start from the canonical `UI/Default/Default-UI-Template.ms` scaffold.  
+\- Before writing the first dialog/rollout code, read this file plus `UI/Default/README.md`, and start from the canonical `G:\CODE\MAXSCRIPT\SCRIPTS\CODEBASE\UI\Templates\Dialog-default.ms` scaffold.  
 \- Do not first create a stripped-down, unpersisted, or differently styled prototype with the intention of adding the shared UI defaults later.  
 \- Every standalone tool dialog or owning rollout must use the canonical `.NET tool title button` from its first version. LMB on it performs the shared restart action.  
 \- Every standalone tool dialog or owning rollout must use INI-backed UI state persistence from its first version. Persist relevant control values, selected modes/options, dialog position, and the supported dialog size state.  
@@ -182,6 +182,8 @@ on myRollout open do
 
 \- Align related controls consistently.  
 \- Use consistent margins, spacing, control heights, and label widths.  
+\- Keep spinner labels/captions on the same horizontal row as their spinner fields; do not place the label above or below the spinner by default.  
+\- Keep spinner controls compact. Size the numeric field for the expected value format instead of stretching it to a generic control width.  
 \- Make subrollout slots fill the full usable width of their parent rollout.  
 \- Make every subrollout slot approximately one closed-rollout header height taller than its content; use about \`24 px\` additional height.  
 \- Group controls by task, not by implementation detail.  
@@ -202,9 +204,10 @@ on myRollout open do
 \- Use a **12 px base grid** for dialog and control dimensions.  
 \- Default button size: **96 × 24 px**.  
 \- Standard control height: **24 px**.  
-\- Exception: the canonical `tool title button` / title-restart button is **18 px** high by default. Preserve its current font family and style and increase its current font size by **`2.0`** when applying the title-button style; do not force the standard 24 px control height.  
+\- Exception: the canonical `tool title button` / title-restart button uses a fixed **14 px** font and its button height is calculated as `font_size + 6`, therefore **20 px** by default. Use exactly `Segoe UI`, `14.0`, `FontStyle.Bold`, and `GraphicsUnit.Pixel`; do not force the standard 24 px control height.  
 \- Preferred control widths: **72, 96, 144, 192, 288 px**.  
-\- Preferred dialog widths: **336, 384, 480, 576 px**.  
+\- Default standalone UI rollout/dialog width: **288 px**.  
+\- Wider standard rollout/dialog widths, when the UI needs more horizontal space: **336, 384, 480, 576 px**.  
 \- Standard spacing: **12 px**.  
 \- Use **6 px** only for compact half-grid spacing when 12 px is too large.  
 \- Prefer widths, heights, margins, and spacing divisible by **12**.
@@ -235,6 +238,9 @@ on myRollout open do
 \- Prefer native rollout controls for standard spinners, checkboxes, radio buttons, dropdowns, list boxes, labels, and buttons when styling requirements permit.  
 \- Use \`multiListBox\` when multiple items may be selected instead of creating many individual checkbuttons.  
 \- Keep spinner ranges realistic and prevent invalid values where possible.  
+\- Prefer the native spinner caption for its label when practical so the label and numeric field stay naturally aligned on one row.  
+\- Default native spinner layout: `width:88 fieldwidth:36 align:#left offset:[0,0]`. Use 88 px for the whole control and 36 px for the numeric field. Increase the width when the caption or displayed value needs more space.  
+\- Keep unit text, when present, on the same row immediately after the spinner rather than widening the spinner field.  
 \- Use checkbuttons only when their pressed/unpressed visual state meaningfully represents a persistent mode.
 
 
@@ -329,9 +335,12 @@ btn.Font = dotNetObject \\
 \- Border width: `0 px`.  
 \- Hover background: RGB `45, 45, 48`.  
 \- Pressed background: RGB `45, 45, 48`.  
-\- Preserve the current font family and style and increase the current button font size by `2.0` when the title-button style is applied.  
+\- Font: exactly `Segoe UI`, size `14.0`, style `Bold`, unit `GraphicsUnit.Pixel`. The font size is fixed; do not derive it from the button height, inherit it, or increment it when reapplying the style.
+\- Border color: RGB `45, 45, 48`.
+\- Set `TabStop = false`.
+\- Use these exact settings as the default for all MaxScript tool-dialog title buttons; substitute only the tool/dialog name in the example caption.  
 \- Do not allow the normal bright Windows hover or pressed highlight.  
-\- Default height: **18 px**.  
+\- Set the button height from the fixed title font size using `button.height = font_size + 6`. With the canonical `font_size = 14`, the default height is **20 px**.  
 \- Fill the available dialog width. With standard `12 px` side margins, use `dialog_width - 24 px`.  
 \- Resize the `tool title button` horizontally whenever the owning dialog width changes.  
 \- Use reusable function names containing `ToolTitleButton`, for example `setupToolTitleButton` and `resizeToolTitleButton`.  
@@ -349,27 +358,28 @@ Equivalent MaxScript styling:
 
 
 ```maxscript
-button_control.UseVisualStyleBackColor = false
-button_control.FlatStyle = (dotNetClass "System.Windows.Forms.FlatStyle").Flat
+color_type = dotNetClass "System.Drawing.Color"
+flat_style_type = dotNetClass "System.Windows.Forms.FlatStyle"
+font_style_type = dotNetClass "System.Drawing.FontStyle"
+graphics_unit_type = dotNetClass "System.Drawing.GraphicsUnit"
 
-button_control.BackColor = (dotNetClass "System.Drawing.Color").FromArgb 45 45 48
-button_control.ForeColor = (dotNetClass "System.Drawing.Color").FromArgb 62 158 255
+dark_color = color_type.FromArgb 45 45 48
+title_color = color_type.FromArgb 62 158 255
 
-button_control.FlatAppearance.BorderSize = 0
-button_control.FlatAppearance.MouseOverBackColor = button_control.BackColor
-button_control.FlatAppearance.MouseDownBackColor = button_control.BackColor
+btnTitle.Text = "TOOL NAME"
+btnTitle.FlatStyle = flat_style_type.Flat
+btnTitle.FlatAppearance.BorderSize = 0
+btnTitle.FlatAppearance.BorderColor = dark_color
+btnTitle.FlatAppearance.MouseOverBackColor = dark_color
+btnTitle.FlatAppearance.MouseDownBackColor = dark_color
 
-button_control.height = 18
-local current_font = button_control.Font
+btnTitle.UseVisualStyleBackColor = false
+btnTitle.BackColor = dark_color
+btnTitle.ForeColor = title_color
+btnTitle.TabStop = false
 
-if current_font != undefined then
-(
-    button_control.Font = dotNetObject \
-        "System.Drawing.Font" \
-        current_font.FontFamily \
-        (current_font.Size + 2.0) \
-        current_font.Style
-)
+btnTitle.Font = dotNetObject "System.Drawing.Font" \
+    "Segoe UI" 14.0 font_style_type.Bold graphics_unit_type.Pixel
 ```
 
 
@@ -582,7 +592,7 @@ When a dialog contains multiple rollouts, resize the rollout/subrollout area rat
 \- Verify that the default INI is created beside the owning/main `.ms` script and that multiple versioned entry scripts use the same unversioned INI file.  
 \- Test that the native dialog/tool title shows the actual running version number when it is visible.  
 \- For a `tool title button`, verify that the label contains only the tool/dialog name and no version text.  
-\- For a `tool title button`, verify RGB `45, 45, 48` for normal, hover, and pressed backgrounds; RGB `62, 158, 255` text; `0 px` border; default `18 px` height; and font size increased by `2.0` from the button font that existed before the title-button style was applied.  
+\- For a `tool title button`, verify RGB `45, 45, 48` for normal, hover, and pressed backgrounds; RGB `62, 158, 255` text; `0 px` border; height equal to `font_size + 6` (**20 px** for the canonical 14 px font); border color RGB `45, 45, 48`; `TabStop = false`; and exactly `Segoe UI`, `14.0`, `Bold`, `GraphicsUnit.Pixel`. Reapplying the style must not increase the font size.  
 \- Resize the dialog horizontally and verify that the `tool title button` continues to fill the usable width.  
 \- Test `restartTool` behavior for both cases: a newer matching versioned script exists, and no newer version exists.  
 \- Verify that LMB on the `tool title button` calls `restartTool`.  
@@ -602,3 +612,24 @@ When a dialog contains multiple rollouts, resize the rollout/subrollout area rat
 \- Preserve unrelated controls, events, settings, and behavior.  
 \- Update only files that were actually modified.  
 \- Keep the canonical filename unchanged unless a rename is explicitly requested.
+
+
+
+\#\# Registered floating dialog position restoration
+
+
+
+
+- Do not assume that the `pos:` passed to `createDialog` is the final screen position after the rollout is registered and floated as a CUI dialog bar. Capture the desired position with `getDialogPos`, then verify the recreated dialog after `cui.RegisterDialogBar` and `cui.FloatDialogBar` have completed.
+- Measure the restoration offset as `actual_pos - saved_pos`. If the offset is repeatable in the target 3ds Max/display setup, compensate the creation position by subtracting that measured offset: `createDialog my_rollout pos:(saved_pos - position_correction)`. Register and float the dialog, then verify the final position again. Do not treat a measured offset such as `[6,29]` as universal across Max versions, DPI settings, or displays.
+- Do not call `setDialogPos` while the rollout is registered. Unregister it before changing its position; unregister before destroying it.
+- Test position restoration by moving the registered/floating dialog, capturing its screen position, unregistering and destroying it, recreating it with the measured correction, registering and floating it, then comparing `getDialogPos` with the captured position after deferred UI processing. Report the remaining offset and pass only within the chosen pixel tolerance.
+
+Example using a correction measured on the current setup:
+
+```maxscript
+position_correction = [6,29]
+createDialog my_rollout pos:(saved_pos - position_correction)
+cui.RegisterDialogBar my_rollout
+cui.FloatDialogBar my_rollout
+```

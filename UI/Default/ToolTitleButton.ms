@@ -5,7 +5,7 @@ The tool title button uses the production host appearance and LMB restart patter
 
 struct ToolTitleButton_v
 (
-    file_version = "0.05",
+    file_version = "0.07",
 
     /*
     Applies the canonical tool title button appearance and tool-name label.
@@ -19,7 +19,9 @@ struct ToolTitleButton_v
         local flat_style_class = dotNetClass "System.Windows.Forms.FlatStyle"
         local dark_color = color_class.FromArgb 45 45 48
         local title_color = color_class.FromArgb 62 158 255
-        local current_font = button_control.Font
+        local font_style_type = dotNetClass "System.Drawing.FontStyle"
+        local graphics_unit_type = dotNetClass "System.Drawing.GraphicsUnit"
+        local font_size = 14
 
         button_control.Text = tool_name
         button_control.UseVisualStyleBackColor = false
@@ -35,23 +37,17 @@ struct ToolTitleButton_v
         button_control.FlatAppearance.MouseOverBackColor = dark_color
         button_control.FlatAppearance.MouseDownBackColor = dark_color
 
-        button_control.height = 18
+        button_control.height = font_size + 6
 
-        if current_font != undefined then
-        (
-            button_control.Font = dotNetObject \
-                "System.Drawing.Font" \
-                current_font.FontFamily \
-                (current_font.Size + 2.0) \
-                current_font.Style
-        )
+        button_control.Font = dotNetObject "System.Drawing.Font" \
+            "Segoe UI" (font_size as float) font_style_type.Bold graphics_unit_type.Pixel
 
         true
         -- return
     ),
 
     /*
-    Resizes the tool title button to the full available width and standard 18 px height.
+    Resizes the tool title button to the full available width and canonical font-size-plus-6 height.
     */
     function resizeToolTitleButton button_control available_width =
     (
@@ -59,8 +55,10 @@ struct ToolTitleButton_v
 
         if available_width < 1 then available_width = 1
 
+        local font_size = 14
+
         button_control.width = available_width
-        button_control.height = 18
+        button_control.height = font_size + 6
 
         true
         -- return

@@ -14,6 +14,16 @@ The goal is to prevent parser errors, type-contract bugs, fake success, silent n
 - Do not call undefined helper functions, invented native methods, or APIs that have not been verified to exist in MAXScript/3ds Max.
 - Avoid forward-reference problems. A function or symbol must be available when the code path that uses it executes.
 
+## Return-type contract safety
+
+- Every function must preserve its documented return datatype on every code path.
+- This applies to every datatype, not only Arrays.
+- Never return a random status string such as `"ok"`, `"failed"`, `"error"`, or `"success"` when the function contract expects an Integer, Float, Boolean, Array, BitArray, node, struct, Point3, modifier instance, or any other non-String datatype.
+- Never substitute any unrelated datatype for the expected datatype unless the function contract explicitly defines a union of allowed return types.
+- Use a valid value of the expected datatype for success/failure/no-result semantics where appropriate, or `undefined` only when the contract explicitly allows it.
+- Human-readable status belongs in logging, Listener output, or an explicit result/status structure, not in a return slot whose callers expect another datatype.
+- During static validation, inspect normal returns, early returns, catch/failure paths, and fall-through expressions for return-type mismatches.
+
 ## Identifier safety
 
 Follow `maxscript-protected-identifiers.md` for reserved keywords, protected globals, built-in classes, interfaces, constructors, and other collision-prone identifiers.

@@ -33,11 +33,11 @@ The goal is to keep features isolated, make debugging local, and reduce the risk
 ## Canonical shared Codebase layout
 
 
-Shared reusable MaxScript assets live under `Maxscript/Codebase/`.
+Shared reusable MaxScript assets live in the separate MaxScript codebase root configured by the AI AGENTS project. Paths below are relative to that root.
 
 
 ```text
-Codebase/
+MaxScript Codebase root/
 ├─ Functions/
 ├─ Operations/
 │  └─ Epoly/
@@ -60,16 +60,16 @@ Codebase/
 `Functions`, `Operations`, `Tools`, and `Toolsets` are the architecture layers. Intermediate folders inside a layer are organizational categories or domains only; they do not create another architecture layer and they do not change dependency direction.
 
 
-Tool packages belong under the best matching `Codebase/Tools/` category. The `EPOLY/` category may use component-oriented subcategories such as `Edge Tools/`, `Face Tools/`, `Loop Tools/`, and `Vertex Tools/`.
+Tool packages belong under the best matching `Tools/` category. The `EPOLY/` category may use component-oriented subcategories such as `Edge Tools/`, `Face Tools/`, `Loop Tools/`, and `Vertex Tools/`.
 
 
-Operation packages may be grouped by reusable domain. Shared Editable Poly operation-level material belongs under `Codebase/Operations/Epoly/`.
+Operation packages may be grouped by reusable domain. Shared Editable Poly operation-level material belongs under `Operations/Epoly/`.
 
 
 `DUMP/` is the shared diagnostics/debug tooling area under Tools; it is not a new architecture layer.
 
 
-Do not place new reusable shared assets in the legacy `Modules/` or root `Epoly/` locations. Use the appropriate `Codebase/` layer and category instead.
+Do not place new reusable shared assets in the legacy `Modules/` or root `Epoly/` locations. Use the appropriate codebase layer and category instead.
 
 
 ## Feature modules
